@@ -7,7 +7,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(config => {
+    //To allow content negotiaion via [Accept] header
+    config.RespectBrowserAcceptHeader = true;
+    //To reject content negotiaion for [Accept] header that the server does not support
+    //for not supported [Accept] header, server respond with [406 Not Acceptable]
+    config.ReturnHttpNotAcceptable = true;
+})
+    .AddXmlDataContractSerializerFormatters()
+    //Add my custom CSV output serializer
+    .AddCustomCSVOutputFormatter()
     //Add reference to where the [controllers] are.
     .AddApplicationPart(typeof(CompanyEmployees.Presentation.AssemblyReference).Assembly);
 builder.Services.AddEndpointsApiExplorer();

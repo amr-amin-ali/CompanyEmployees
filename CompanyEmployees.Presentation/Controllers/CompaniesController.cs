@@ -16,16 +16,15 @@ namespace CompanyEmployees.Presentation.Controllers
         [HttpGet]
         public IActionResult GetCompanies()
         {
-            throw new Exception("Exception");
-            //try
-            //{
             var companies = _serviceManager.CompanyService.GetAllCompanies(trackChanges: false);
-                return Ok(companies);
-            //}
-            //catch
-            //{
-            //    return StatusCode(500, "Internal server error");
-            //}
+            return Ok(companies);
+        }
+        [HttpGet]
+        [Route("{id:guid}")]
+        public IActionResult GetCompany(Guid id)
+        {
+            var company = _serviceManager.CompanyService.GetCompany(id, trackChanges: false);
+            return Ok(company);
         }
     }
 }
