@@ -52,9 +52,9 @@ namespace CompanyEmployees.Presentation.Controllers
         [HttpPut("{id:guid}")]
         public IActionResult UpdateEmployeeForCompany(Guid companyId, Guid id, [FromBody] EmployeeForUpdateDto employee)
         {
-            if (employee is null) 
+            if (employee is null)
                 return BadRequest("EmployeeForUpdateDto object is null");
-            if (!ModelState.IsValid) 
+            if (!ModelState.IsValid)
                 return UnprocessableEntity(ModelState);
             _serviceManager.EmployeeService.UpdateEmployeeForCompany(companyId, id, employee, compTrackChanges: false, empTrackChanges: true);
             return NoContent();
@@ -63,13 +63,30 @@ namespace CompanyEmployees.Presentation.Controllers
 
 
         [HttpPatch("{id:guid}")]
-        public IActionResult PartiallyUpdateEmployeeForCompany(Guid companyId, Guid id, [FromBody] JsonPatchDocument<EmployeeForUpdateDto> patchDoc)
+        public IActionResult PartiallyUpdateEmployeeForCompany(
+            Guid companyId, 
+            Guid id, 
+            [FromBody] JsonPatchDocument<EmployeeForUpdateDto> patchDoc)
         {
+            /*
+             * Request header must have [content-type:application/json-patch+json]
+             * 
+             * [content-type:application/json] some times return null
+             */
+
             if (patchDoc is null)
                 return BadRequest("patchDoc object sent from client is null.");
-            var result = _serviceManager.EmployeeService.GetEmployeeForPatch(companyId, id,
-            compTrackChanges: false, empTrackChanges: true);
-            patchDoc.ApplyTo(result.employeeToPatch);
+
+            var result = _serviceManager.EmployeeService.GetEmployeeForPatch(companyId, id, compTrackChanges: false, empTrackChanges: true);
+
+            patchDoc.ApplyTo(result.employeeToPatch, ModelState);
+
+            //re-validate before saving to database
+            TryValidateModel(result.employeeToPatch);
+
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
+
             _serviceManager.EmployeeService.SaveChangesForPatch(result.employeeToPatch, result.employeeEntity);
             return NoContent();
         }
