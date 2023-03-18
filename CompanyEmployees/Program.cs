@@ -2,6 +2,8 @@ using CompanyEmployees.Extensions;
 using Contracts;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Options;
 using NLog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +16,11 @@ builder.Services.AddControllers(config => {
     //To reject content negotiaion for [Accept] header that the server does not support
     //for not supported [Accept] header, server respond with [406 Not Acceptable]
     config.ReturnHttpNotAcceptable = true;
+
+    //to support patch req
+    config.InputFormatters.Insert(0, GetJsonPatchInputFormatter());
+
+
 })
     .AddXmlDataContractSerializerFormatters()
     //Add my custom CSV output serializer
@@ -40,6 +47,24 @@ builder.Services.AddSqlDbContext(builder.Configuration);
 
 LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(), "/nlog.config"));
 builder.Services.AddLoggerConfigurations();
+
+
+
+//NewtonsoftJson to support patch requests
+/*
+ * function configures support for JSON Patch using Newtonsoft.Json while leaving the other formatters unchanged. 
+ */
+NewtonsoftJsonPatchInputFormatter GetJsonPatchInputFormatter() => new ServiceCollection()
+    .AddLogging()
+    .AddMvc()
+    .AddNewtonsoftJson()
+    .Services.BuildServiceProvider()
+    .GetRequiredService<IOptions<MvcOptions>>()
+    .Value.InputFormatters.OfType<NewtonsoftJsonPatchInputFormatter>()
+    .First();
+
+
+
 
 var app = builder.Build();
 
