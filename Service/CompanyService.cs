@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Contracts;
 using Entities.Exceptions;
+using Entities.Models;
 using Service.Contracts;
 using Shared.DataTransferObjects;
 
@@ -19,16 +20,28 @@ namespace Service
             _mapper = mapper;
         }
 
+        public CompanyDto CreateCompany(CompanyForCreationDto company)
+        {
+            if (string.IsNullOrWhiteSpace(company.Address))
+            {
+                throw new EmployeeInvalidModelException("Address is Required");
+            }
+            var companyEntity = _mapper.Map<Company>(company);
+            _repositoryManager.CompanyRepository.CreateCompany(companyEntity);
+            _repositoryManager.SaveChanges();
+            var companyToReturn = _mapper.Map<CompanyDto>(companyEntity); return companyToReturn;
+        }
+
         public IEnumerable<CompanyDto> GetAllCompanies(bool trackChanges)
         {
-                var companies = _repositoryManager.CompanyRepository.GetAllCompanies(trackChanges);
-                var companiesDto = _mapper.Map<IEnumerable<CompanyDto>>(companies);
-                return companiesDto;
+            var companies = _repositoryManager.CompanyRepository.GetAllCompanies(trackChanges);
+            var companiesDto = _mapper.Map<IEnumerable<CompanyDto>>(companies);
+            return companiesDto;
         }
 
         public CompanyDto GetCompany(Guid companyId, bool trackChanges)
         {
-            var company=_repositoryManager.CompanyRepository.GetCompany(companyId, trackChanges);
+            var company = _repositoryManager.CompanyRepository.GetCompany(companyId, trackChanges);
             if (company == null)
             {
                 throw new CompanyNotFoundException(companyId);
