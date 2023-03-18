@@ -52,25 +52,34 @@ namespace Service
         public IEnumerable<CompanyDto> GetByIds(IEnumerable<Guid> ids, bool trackChanges)
         {
             if (ids is null) throw new IdParametersBadRequestException();
-            var companyEntities = _repositoryManager.CompanyRepository.GetByIds(ids, trackChanges); 
-            if (ids.Count() != companyEntities.Count()) 
+            var companyEntities = _repositoryManager.CompanyRepository.GetByIds(ids, trackChanges);
+            if (ids.Count() != companyEntities.Count())
                 throw new CollectionByIdsBadRequestException();
             var companiesToReturn = _mapper.Map<IEnumerable<CompanyDto>>(companyEntities); return companiesToReturn;
         }
 
         public (IEnumerable<CompanyDto> companies, string ids) CreateCompanyCollection(IEnumerable<CompanyForCreationDto> companyCollection)
         {
-            if (companyCollection is null) 
+            if (companyCollection is null)
                 throw new CompanyCollectionBadRequest();
-            var companyEntities = _mapper.Map<IEnumerable<Company>>(companyCollection); 
+            var companyEntities = _mapper.Map<IEnumerable<Company>>(companyCollection);
             foreach (var company in companyEntities)
             {
                 _repositoryManager.CompanyRepository.CreateCompany(company);
             }
             _repositoryManager.SaveChanges(); var companyCollectionToReturn =
-            _mapper.Map<IEnumerable<CompanyDto>>(companyEntities); 
+            _mapper.Map<IEnumerable<CompanyDto>>(companyEntities);
             var ids = string.Join(",", companyCollectionToReturn.Select(c => c.Id));
             return (companies: companyCollectionToReturn, ids: ids);
+        }
+
+        public void DeleteCompany(Guid companyId, bool trackChanges)
+        {
+            var company = _repositoryManager.CompanyRepository.GetCompany(companyId, trackChanges);
+            if (company is null)
+                throw new CompanyNotFoundException(companyId);
+            _repositoryManager.CompanyRepository.DeleteCompany(company);
+            _repositoryManager.SaveChanges();
         }
     }
 }

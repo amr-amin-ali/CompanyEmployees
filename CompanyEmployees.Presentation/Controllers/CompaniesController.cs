@@ -45,7 +45,12 @@ namespace CompanyEmployees.Presentation.Controllers
             var companies = _serviceManager.CompanyService.GetByIds(ids, trackChanges: false); return Ok(companies);
         }
 
-
+        [HttpDelete("{id:guid}")]
+        public IActionResult DeleteCompany(Guid id)
+        {
+            _serviceManager.CompanyService.DeleteCompany(id, trackChanges: false);
+            return NoContent();
+        }
 
     }
 }
